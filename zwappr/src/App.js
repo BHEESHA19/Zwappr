@@ -1,23 +1,34 @@
-import logo from './logo.svg';
-import './App.css';
+import './styles/App.css';
+import ListingPage from "./pages/ListingPage"
+import temp_listing from "./assets/temp_listing.png"
+import one_star from "./assets/one_star.png"
+import default_pfp from "./assets/default_pfp.png"
+
+const user = {
+  profile_image: default_pfp,
+  stars: one_star,
+  ratings: "1.0 (10 reveiws)",
+  name: "John Doe"
+};
+
+const listing = {
+  image: temp_listing,
+  title: "Used PS4",
+  price: "$20/day",
+  description: "PS4 with controller, hdmi, power cable, and games in good condition.",
+  owner: user
+};
+
+
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        ZWAPPR
       </header>
+
+      <ListingPage {...listing}/>
     </div>
   );
 }
