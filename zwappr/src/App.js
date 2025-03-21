@@ -4,6 +4,9 @@ import temp_listing from "./assets/temp_listing.png"
 import one_star from "./assets/one_star.png"
 import default_pfp from "./assets/default_pfp.png"
 
+
+
+/* note: we will be getting user and listing from database in future*/
 const user = {
   profile_image: default_pfp,
   stars: one_star,

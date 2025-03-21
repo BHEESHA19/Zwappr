@@ -9,6 +9,8 @@ const OwnerCard = (user) => (
 )
 
 
+
+
 function ListingPage(item){
     return (
         <div className="listing-container">
