@@ -1,0 +1,323 @@
+/*HOME PAGE*/
+
+/*HEADER:*/
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 50px;
+}
+
+.header-container p {
+    text-align: center;
+    color: #A5A5A5;
+    font-weight: 600;
+}
+
+.header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 50px;
+}
+
+.logo-container, .search-bar-container, .profile-picture-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.logo-container{
+    gap: 10px;
+}
+
+.logo-container h3 {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 36px;
+    margin:0;
+}
+
+.search-bar-container {
+    width: 70%;
+    border-radius: 999px;
+    border: 1px solid #A5A5A5;
+    box-shadow: 0 0 10px #A5A5A5;
+}
+
+.search-bar-container img {
+    margin: 5px;
+    padding: 5px;
+    border-radius: 50%;
+    background-color: black;
+}
+
+
+.search-bar-container input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 1rem;
+}
+
+.profile-picture-container button {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    aspect-ratio: 1;
+    justify-content: center;
+    background-color: black;
+}
+
+.profile-picture-container img{
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: contain;
+}
+
+
+
+
+
+/*FILTER BAR*/
+.filter-bar-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 30px;
+}
+
+.categories-list-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 30px;
+    align-items: center;
+    justify-content: flex-start;
+}
+.category-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    border: none;
+    text-align: center;
+    gap: 10px;
+}
+.category-card span{
+    font-weight: 600;
+    color: #A5A5A5;
+    width: 120px;
+}
+
+.category-card img {
+    height: 50px;
+    width: 50px;
+}
+
+.filter-button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    gap: 5px;
+    border: 1px solid black;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 8px 15px;
+    box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+
+}
+
+.filter-button img{
+    height: 30px;
+    width: 30px;
+}
+
+
+
+
+
+
+/*LISTINGS STYLES*/
+.listings-container{
+    display: grid;
+    gap: 20px;
+    padding-top: 30px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+
+.item-thumbnail {
+    background-size: cover;
+    background-repeat: no-repeat;
+    border: none;
+    background-position: center;
+    border-radius: 20px;
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    aspect-ratio: 1;
+    box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+}
+
+.item-thumbnail button{
+    background-size: contain;
+    background-position: center;
+    background-color: black;
+    border: none;
+    border-radius: 50%;
+    margin: 5px;
+    height: 40px;
+    width: 40px;
+}
+
+.item-description-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.item-description-container ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    color: #A5A5A5;
+}
+
+.item-description-container p {
+    margin: 0;
+}
+
+.item-title, .item-price, .item-owner{
+    color: black;
+    font-weight: bold;
+}
+
+.item-owner {
+    font-weight: bold;
+}
+
+
+
+
+
+
+
+/* LISTINGS PAGE */
+/*HEADER*/
+.back-button {
+    background-size: cover;
+    background-position: center;
+    aspect-ratio: 1;
+    border: none;
+    background-color: transparent;
+}
+
+
+.title {
+    font-size: 36px;
+    font-weight: 600;
+}
+
+.content {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+
+
+
+.image-display-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+}
+
+.thumbnail {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    grid-column: span 2; /* The first image takes up 2 columns */
+    grid-row: span 2;    /* The first image takes up 2 rows */
+}
+
+
+.grid-image {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+
+.owner-profile {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.owner-profile img {
+    background-color: black;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+}
+
+.item-description {
+    font-size: 20px;
+    color: #444343;
+}
+
+
+.owner-contact {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.item-info-container {
+    padding-top: 30px;
+}
+
+
+.renting-options {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    border: 1px solid black;
+    border-radius: 20px;
+    gap: 10px;
+}
+
+
+.renting-options table td {
+    padding: 5px 10px;
+}
+
+
+.renting-options button {
+    background-color: black;
+    color: white;
+    border-radius: 10px;
+    width: 100%;
+    padding: 10px;
+}
+
+.rental-date-selector {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
