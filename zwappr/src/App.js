@@ -5,7 +5,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
+        <img src='https://res.cloudinary.com/dydtapwia/image/upload/c_auto,g_auto,h_500,w_500/gradphoto?_a=BAMAJaRg0' className="App-logo" alt="logo" />
         <p>
           Edit <code>src/App.js</code> and save to reload.
         </p>
