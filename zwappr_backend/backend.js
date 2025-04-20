@@ -1,4 +1,6 @@
 const { DynamoDBClient, PutItemCommand, GetItemCommand } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, ScanCommand } = require('@aws-sdk/lib-dynamodb');
+
 const { v4: uuidv4 } = require('uuid');
 // const { buildResponse } = require('./utils/util.js');
 const bcrypt = require('bcryptjs');
@@ -23,6 +25,7 @@ app.use(express.json());
 app.use(cors());
 
 const ddbClient = new DynamoDBClient({ region: 'ca-central-1' });
+const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
 const bookingTable = 'Zwappr_Bookings';
 const usersTable = 'Zwappr_Users';
 const itemsTable = 'Zwappr_Items';
@@ -44,113 +47,118 @@ const io = new Server(server, {
     pingInterval: 25000,
     transports: ['websocket']
 });
-
 const port = 5001;
-
 server.listen(port, () => {
     console.log(`Listening on port: ${port}`);
 });
-
 cloudinary.config({ 
     cloud_name: 'dydtapwia', 
     api_key: '394936464467753', 
     api_secret: 'kDfUorELYIwNcVCQSMiBKzEV_AI' 
 });
-
 // Configure multer for handling files
 const upload = multer({ dest: 'uploads/' }); 
+////////////////////////////////////////////////////////////////////
+
 
 // Upload endpoint for multiple images & videos
-app.post('/uploadToCloudinary', upload.array('media', 10), async (req, res) => {
-
-   
-
+app.post('/uploadToCloudinary', upload.single('media'), async (req, res) => {
     try {
-      const urls = [];
-  
-      for (const file of req.files) {
+        const file = req.file; // Access the single uploaded file
         const filePath = path.join(__dirname, file.path);
-  
-        // Determine if the file is an image or video
-        const resourceType = file.mimetype.startsWith('video') ? 'video' : 'image';
-  
+
+        const resourceType = 'image';
+
         // Upload to Cloudinary with appropriate resource type
         const result = await cloudinary.uploader.upload(filePath, { resource_type: resourceType });
-  
-        urls.push(result.secure_url); // Store URL we get from Cloudinary to the urls array
+
         console.log('Uploaded to Cloudinary:', result.secure_url);
-  
+
         fs.unlinkSync(filePath); // Delete local file after upload
-      }
-  
-      res.json({ urls });
-      return {
-        headers: {
-            "Access-Control-Allow-Origin": "*", 
-            "Access-Control-Allow-Headers": "Content-Type",
-            "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-            },
-        statusCode: 200,
-        body: JSON.stringify({ message: 'Item details added successfully'})
-    };
+
+        // Return the single URL
+        res.json({ url: result.secure_url });
     } catch (error) {
-      console.error('Upload to cloudinary failed:', error);
-      res.status(500).send('Upload to cloudinary failed');
+        console.error('Upload to Cloudinary failed:', error);
+        res.status(500).send('Upload to Cloudinary failed');
     }
+});
 
-  });
 
+app.post('/addListing', async (req, res) => {
+   
 
-  app.post('/uploadtoDB', async (req, res) => {
-    
+    console.log("Add Listing Request Body: ", req.body);
+
+    const user_id = req.body.user_id;
+    const image_url = req.body.image_url;
     const category = req.body.category;
     const item_name = req.body.item_name;
-    const price_per_day = req.body.price;
+    const price_per_day = req.body.price_per_day;
     const description = req.body.description;
     const start_date = req.body.start_date;
     const end_date = req.body.end_date;
     const item_id = uuidv4();
     const date_uploaded = new Date().toISOString();
+    const current_renter = ''; // Assuming this is null when the item is first listed
+    const isBooked = false;
 
+     //check for missing fields
+     if (!user_id || !image_url || !category || !item_name || !price_per_day || !description || !start_date || !end_date) {
+        return res.status(400).json({
+            message: 'Missing required fields'
+        });
+    }
 
     const params = {
-        TableName: 'Zwappr_Items',
+        TableName: itemsTable,
         Item: {
-            item_id: { S: item_id },
-            category: { S: category },
-            item_name: { S: item_name },
-            price_per_day: { N: price_per_day },
-            description: { S: description },
-            start_date: { S: start_date },
-            end_date: { S: end_date },
-            date_uploaded: { S: date_uploaded }
+            user_id: { S: user_id || '' },
+            image_url: { S: image_url || '' },
+            item_id: { S: item_id || '' },
+            category: { S: category || '' },
+            item_name: { S: item_name || '' },
+            price_per_day: { S: price_per_day || '' },
+            description: { S: description || '' },
+            start_date: { S: start_date || '' },
+            end_date: { S: end_date || '' },
+            date_uploaded: { S: date_uploaded || '' },
+            current_renter: { S: current_renter || '' },
+            isBooked: { BOOL: isBooked || false }
         }
     };
 
     try {
-        await ddbClient.send(new PutItemCommand(params));
-        return {
-            headers: {
-                "Access-Control-Allow-Origin": "*", 
-                "Access-Control-Allow-Headers": "Content-Type",
-                "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-                },
-            statusCode: 200,
-            body: JSON.stringify({ message: 'Item details added successfully'})
-        };
-    } catch (error) {
-        return {
-            headers: {
-                "Access-Control-Allow-Origin": "*", 
-                "Access-Control-Allow-Headers": "Content-Type",
-                "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-                },
-            statusCode: 500,
-            body: JSON.stringify({ message: 'Failed to add item', error: error.message })
-        };
-    }
 
-    });
+        await ddbClient.send(new PutItemCommand(params));
+        res.status(200).json({
+            message: 'Item details added successfully'
+        });
+    } catch (error) {
+        console.log("Error adding item details: ", error);
+        res.status(500).json({
+            message: 'Failed to add items',
+            error: error.message
+        });
+    }
+});
+
+app.get('/getItems', async (req, res) => {
+    const params = {
+        TableName: itemsTable
+    };
+    try {
+        const data = await ddbDocClient.send(new ScanCommand(params));
+        console.log("Data from DynamoDB: ", data);
+        if (!data.Items) {
+            return res.status(404).json({ message: 'No items found' });
+        }
+        res.status(200).json(data.Items);
+    } catch (error) {
+        console.error('Error retrieving items:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
 
 
   
@@ -186,61 +194,41 @@ app.post('/login', async (req, res) => {
         const data = await ddbClient.send(new GetItemCommand(params));
 
         if (!data.Item) {
-            console.log("Sending invalid login response2");
-            return {
-                statusCode: 500,
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ message: 'Invalid Username or Password' })
-            }
+            // console.log("Sending invalid login response2");
+            res.status(500).json({ message: 'Invalid username or password' });
         }
 
         const hashedPassword = data.Item.password.S;
-        console.log("Hashed password from DB: ", hashedPassword);
-        console.log("Password from request: ", password);
-        const isValidPassword = compareSync(password, hashedPassword);
-        console.log("Is valid password: ", isValidPassword);
+        // console.log("Hashed password from DB: ", hashedPassword);
+        // console.log("User data from DB: ", data.Item);
+        // console.log("Password from request: ", password);
+        // console.log("Is valid password: ", isValidPassword);
+        const isValidPassword = compareSync(password.trim(), hashedPassword);
 
         if (!isValidPassword) {
             console.log("Sending invalid login response3");
-            return {
-                statusCode: 500,
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ message: 'Invalid Username or Password' })
-            }
+            res.status(500).json({ message: 'Invalid username or password' });
         }
 
-        else{
+        else {
 
-        const userInfo = {
-            username: data.Item.username.S,
-            email: data.Item.email.S
-        };
+            const userInfo = {
+                username: data.Item.username.S,
+                email: data.Item.email.S
+            };
 
-        const token = _generateToken(userInfo);
-        const response = {
-            user: userInfo,
-            token: token
-        };
-        console.log("Sending successful login response");
-        return {
-            statusCode: 200,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ message: 'Login successful' })
+            const token = _generateToken(userInfo);
+            const response = {
+                user: userInfo,
+                token: token
+            };
+            console.log("Sending successful login response");
+            res.status(200).json(response);
         }
-    }
 
     } catch (error) {
         console.error('Error retrieving user:', error);
-        return res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
@@ -273,16 +261,14 @@ app.post('/register', async (req, res) => {
             
             const saveUserResponse = await saveUser(user);
             if (!saveUserResponse) {
-                return buildResponse(503, { message: 'Server Error. Error saving user. Please try again later' });
+                res.status(503).json({ message: 'Error saving user' });
             }
-            res.json('User registered successfully');
-            return buildResponse(200, { message: 'User registered successfully' });
+            res.status(200).json({ message: 'User registered successfully' });
         
         }
 
         if (data.Item && data.Item.username) {
-            return buildResponse(401, { message: 'Username already exists! Please choose a different username.' });
-            res.json('Username already exists! Please choose a different username.');
+            res.status(401).json({ message: 'User already exists!please choose a different username' });
         }
        
 
@@ -333,11 +319,6 @@ app.post('/UPLOADPHOTO', async (req, res) => {
    
 });
 
-
-
-
-
-
 /////////HELPER FUNCTIONS
 async function saveUser(user) {//DynamoDB operation saveUser
     const params = {
@@ -359,16 +340,6 @@ async function saveUser(user) {//DynamoDB operation saveUser
     }
 }
 
-// function buildResponse(statusCode, body) {
-//     return {
-//         statusCode: statusCode,
-//         headers: {
-//             'Access-Control-Allow-Origin': '*',
-//             'Content-Type': 'application/json'
-//         },
-//         body: JSON.stringify(body)//API gateway is expecting a stringified version on the body
-//     }
-// }
 
 function _generateToken(userInfo) {
     if (!userInfo) {
