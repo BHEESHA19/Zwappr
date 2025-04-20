@@ -1,8 +1,13 @@
-const { DynamoDBClient, PutItemCommand } = require('@aws-sdk/client-dynamodb');
-const ddbClient = new DynamoDBClient({ region: 'ca-central-1' });
+const { DynamoDBClient, PutItemCommand, GetItemCommand } = require('@aws-sdk/client-dynamodb');
 const { v4: uuidv4 } = require('uuid');
+// const { buildResponse } = require('./utils/util.js');
+const bcrypt = require('bcryptjs');
+// const { _generateToken } = require('./utils/auth.js');
+const { compareSync } = bcrypt;
+const { hashSync } = bcrypt;
 
-
+const jwt = require('jsonwebtoken');
+const { sign } = jwt;
 const cors = require('cors');
 require('dotenv/config'); // Use require instead of import
 const http = require('http'); // Core Node.js module for creating HTTP server
@@ -16,6 +21,14 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+const ddbClient = new DynamoDBClient({ region: 'ca-central-1' });
+const bookingTable = 'Zwappr_Bookings';
+const usersTable = 'Zwappr_Users';
+const itemsTable = 'Zwappr_Items';
+
+
+
 
 
 //SERVER SETUP
@@ -85,12 +98,10 @@ app.post('/uploadToCloudinary', upload.array('media', 10), async (req, res) => {
       res.status(500).send('Upload to cloudinary failed');
     }
 
-   
-   
   });
 
 
-  app.post('uploadtoDB', async (req, res) => {
+  app.post('/uploadtoDB', async (req, res) => {
     
     const category = req.body.category;
     const item_name = req.body.item_name;
@@ -156,8 +167,134 @@ app.post('/uploadToCloudinary', upload.array('media', 10), async (req, res) => {
 //SERVER ENDPOINTS
 //////////////////////////////////////////////////////////////////
 app.post('/login', async (req, res) => {
-    
+    const username = req.body.username;
+    const password = req.body.password;
+
+    if (!username || !password) {
+        console.log("Sending invalid login response1");
+        return res.status(401).json({ message: 'Username and Password are required' });
+    }
+
+    const params = {
+        TableName: usersTable,
+        Key: {
+            username: { S: username }
+        }
+    };
+
+    try {
+        const data = await ddbClient.send(new GetItemCommand(params));
+
+        if (!data.Item) {
+            console.log("Sending invalid login response2");
+            return {
+                statusCode: 500,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: 'Invalid Username or Password' })
+            }
+        }
+
+        const hashedPassword = data.Item.password.S;
+        console.log("Hashed password from DB: ", hashedPassword);
+        console.log("Password from request: ", password);
+        const isValidPassword = compareSync(password, hashedPassword);
+        console.log("Is valid password: ", isValidPassword);
+
+        if (!isValidPassword) {
+            console.log("Sending invalid login response3");
+            return {
+                statusCode: 500,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: 'Invalid Username or Password' })
+            }
+        }
+
+        else{
+
+        const userInfo = {
+            username: data.Item.username.S,
+            email: data.Item.email.S
+        };
+
+        const token = _generateToken(userInfo);
+        const response = {
+            user: userInfo,
+            token: token
+        };
+        console.log("Sending successful login response");
+        return {
+            statusCode: 200,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: 'Login successful' })
+        }
+    }
+
+    } catch (error) {
+        console.error('Error retrieving user:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
 });
+
+app.post('/register', async (req, res) => {
+    console.log(req.body);
+    const { email, password, username } = req.body;
+
+    if (!email || !password || !username) {
+        return buildResponse(401, { message: 'Missing the required fields' });//checking for missing fields
+    }
+
+    const ur = username.toLowerCase().trim();
+    const params = {
+        TableName: usersTable,
+        Key: {
+            username: { S: ur }
+        }
+    };
+
+    try {
+        const data = await ddbClient.send(new GetItemCommand(params));
+        if (!data.Item) {
+            const encryptedPassword = hashSync(password.trim(), 10);//password is encrypted here
+            const user = {
+                email,
+                password: encryptedPassword,
+                username: username.toLowerCase().trim(),
+                user_id: uuidv4()
+            };
+            
+            const saveUserResponse = await saveUser(user);
+            if (!saveUserResponse) {
+                return buildResponse(503, { message: 'Server Error. Error saving user. Please try again later' });
+            }
+            res.json('User registered successfully');
+            return buildResponse(200, { message: 'User registered successfully' });
+        
+        }
+
+        if (data.Item && data.Item.username) {
+            return buildResponse(401, { message: 'Username already exists! Please choose a different username.' });
+            res.json('Username already exists! Please choose a different username.');
+        }
+       
+
+    } catch (error) {
+        console.error('Error registering user:', error);
+        return res.status(500).json({ message: 'Error registering the user' });
+
+    }
+
+});
+
+
 
 app.post('/UPLOADPHOTO', async (req, res) => {
 
@@ -185,26 +322,64 @@ app.post('/UPLOADPHOTO', async (req, res) => {
     // console.log(optimizeUrl);
     
     // Transform the image: auto-crop to square aspect_ratio
-    const autoCropUrl = cloudinary.url('gradphoto', {
-        crop: 'auto',
-        gravity: 'auto',
-        width: 500,
-        height: 500,
-    });
+    // const autoCropUrl = cloudinary.url('gradphoto', {
+    //     crop: 'auto',
+    //     gravity: 'auto',
+    //     width: 500,
+    //     height: 500,
+    // });
     
-    console.log(autoCropUrl);    
+    // console.log(autoCropUrl);    
    
 });
 
 
 
-app.post('/confirmReservation', async (req, res) => {
-    //change the price 
-    //change the flag status
-});
 
-app.post('/retrieveItems', async (req, res) => {
-    //change the price 
-    //change the flag status
-});
 
+
+/////////HELPER FUNCTIONS
+async function saveUser(user) {//DynamoDB operation saveUser
+    const params = {
+        TableName: usersTable,
+        Item: {
+            username: { S: user.username },
+            user_id: { S: user.user_id },
+            email: { S: user.email },
+            password: { S: user.password }
+        }
+    };
+
+    try {
+        await ddbClient.send(new PutItemCommand(params));
+        return true;
+    } catch (error) {
+        console.error('There is an error in saveUser: ', error);
+        return false;
+    }
+}
+
+// function buildResponse(statusCode, body) {
+//     return {
+//         statusCode: statusCode,
+//         headers: {
+//             'Access-Control-Allow-Origin': '*',
+//             'Content-Type': 'application/json'
+//         },
+//         body: JSON.stringify(body)//API gateway is expecting a stringified version on the body
+//     }
+// }
+
+function _generateToken(userInfo) {
+    if (!userInfo) {
+        return null;
+    }
+
+    // Ensure JWT_SECRET is set in your environment variables
+    const token = sign(
+        { username: userInfo.username, email: userInfo.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' } 
+    );
+    return token;
+}

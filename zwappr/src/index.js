@@ -6,8 +6,8 @@ import Entry from './Entry';
 import reportWebVitals from './reportWebVitals';
 import Home from './Home';
 import { ChakraProvider } from '@chakra-ui/react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -16,12 +16,12 @@ root.render(
     <BrowserRouter>
       
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Entry />} />
           <Route
-            path="/Filmtalk"
+            path="/Home"
             element={
               <ProtectedRoute>
-                <Filmtalk />
+                <Home />
               </ProtectedRoute>
             }
           />
