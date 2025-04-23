@@ -1,4 +1,4 @@
-const { DynamoDBClient, PutItemCommand, GetItemCommand } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBClient, PutItemCommand, GetItemCommand, DeleteItemCommand, UpdateItemCommand } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, ScanCommand } = require('@aws-sdk/lib-dynamodb');
 
 const { v4: uuidv4 } = require('uuid');
@@ -91,8 +91,11 @@ app.post('/addListing', async (req, res) => {
     console.log("Add Listing Request Body: ", req.body);
 
     const user_id = req.body.user_id;
+    const username = req.body.username;
+    const email = req.body.email;
     const image_url = req.body.image_url;
     const category = req.body.category;
+    const location = req.body.location;
     const item_name = req.body.item_name;
     const price_per_day = req.body.price_per_day;
     const description = req.body.description;
@@ -102,6 +105,7 @@ app.post('/addListing', async (req, res) => {
     const date_uploaded = new Date().toISOString();
     const current_renter = ''; // Assuming this is null when the item is first listed
     const isBooked = false;
+    //need to add empty wishlist list here
 
      //check for missing fields
      if (!user_id || !image_url || !category || !item_name || !price_per_day || !description || !start_date || !end_date) {
@@ -114,10 +118,13 @@ app.post('/addListing', async (req, res) => {
         TableName: itemsTable,
         Item: {
             user_id: { S: user_id || '' },
+            username: { S: username || '' },
+            email: { S: email || '' },
             image_url: { S: image_url || '' },
             item_id: { S: item_id || '' },
             category: { S: category || '' },
             item_name: { S: item_name || '' },
+            location: { S: location || '' },
             price_per_day: { S: price_per_day || '' },
             description: { S: description || '' },
             start_date: { S: start_date || '' },
@@ -160,7 +167,85 @@ app.get('/getItems', async (req, res) => {
     }
 });
 
+app.post('/addReservation', async (req, res) => {
+    const { itemowner_id, item_id, renter_id, reservation_start_date, reservation_end_date } = req.body;
+    const booking_id = uuidv4();
+    const date_created = new Date().toISOString();
 
+    // Step 1: Add the reservation to the bookingTable
+    const reservationParams = {
+        TableName: bookingTable,
+        Item: {
+            itemowner_id: { S: itemowner_id },
+            renter_id: { S: renter_id },
+            item_id: { S: item_id },
+            reservation_start_date: { S: reservation_start_date },
+            reservation_end_date: { S: reservation_end_date },
+            booking_id: { S: booking_id },
+            date_created: { S: date_created }
+        }
+    };
+
+    // Step 2: Update the current_renter field in the itemsTable
+    const updateItemParams = {
+        TableName: itemsTable,
+        Key: {
+            item_id: { S: item_id }
+        },
+        UpdateExpression: "SET current_renter = :renter_id",
+        ExpressionAttributeValues: {
+            ":renter_id": { S: renter_id }
+        },
+        ReturnValues: "UPDATED_NEW"
+    };
+
+    try {
+        // Add the reservation to the bookingTable
+        await ddbClient.send(new PutItemCommand(reservationParams));
+
+        // Update the current_renter field in the itemsTable
+        const updateResponse = await ddbClient.send(new UpdateItemCommand(updateItemParams));
+        console.log("Updated current_renter in itemsTable:", updateResponse);
+
+        res.status(200).json({
+            message: 'Reservation added successfully and current_renter updated',
+            booking_id: booking_id
+        });
+    } catch (error) {
+        console.error('Error adding reservation or updating current_renter:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+app.post('/cancelReservation', async (req, res) => {
+    const { item_id } = req.body;
+    const params = {
+        TableName: itemsTable,
+        Key: {
+            item_id: { S: item_id }
+        }
+    };
+    //implement the logic to cancel the reservation
+});
+
+app.post('/removeListing', async (req, res) => {
+    const { item_id } = req.body;
+    const params = {
+        TableName: itemsTable,
+        Key: {
+            item_id: { S: item_id }
+        }
+    };
+    try {
+        await ddbClient.send(new DeleteItemCommand(params));
+        res.status(200).json({
+            message: 'Item removed successfully'
+        });
+    } catch (error) {
+        console.error('Error removing item:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
   
 
 
@@ -214,7 +299,8 @@ app.post('/login', async (req, res) => {
 
             const userInfo = {
                 username: data.Item.username.S,
-                email: data.Item.email.S
+                email: data.Item.email.S,
+                user_id: data.Item.user_id.S
             };
 
             const token = _generateToken(userInfo);
@@ -237,7 +323,7 @@ app.post('/register', async (req, res) => {
     const { email, password, username } = req.body;
 
     if (!email || !password || !username) {
-        return buildResponse(401, { message: 'Missing the required fields' });//checking for missing fields
+        res.status(401).json({ message: 'Missing the required fields' });//checking for missing fields
     }
 
     const ur = username.toLowerCase().trim();
