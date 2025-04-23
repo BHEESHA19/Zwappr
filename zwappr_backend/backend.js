@@ -176,25 +176,26 @@ app.post('/addReservation', async (req, res) => {
     const reservationParams = {
         TableName: bookingTable,
         Item: {
-            itemowner_id: { S: itemowner_id },
-            renter_id: { S: renter_id },
-            item_id: { S: item_id },
-            reservation_start_date: { S: reservation_start_date },
-            reservation_end_date: { S: reservation_end_date },
+            itemowner_id: { S: itemowner_id || '' },
+            renter_id: { S: renter_id || '' },
+            item_id: { S: item_id || '' },
+            reservation_start_date: { S: reservation_start_date || '' },
+            reservation_end_date: { S: reservation_end_date || '' },
             booking_id: { S: booking_id },
             date_created: { S: date_created }
         }
     };
 
-    // Step 2: Update the current_renter field in the itemsTable
+    // Step 2: Update the current_renter and isBooked fields in the itemsTable
     const updateItemParams = {
         TableName: itemsTable,
         Key: {
             item_id: { S: item_id }
         },
-        UpdateExpression: "SET current_renter = :renter_id",
+        UpdateExpression: "SET current_renter = :renter_id, isBooked = :isBooked",
         ExpressionAttributeValues: {
-            ":renter_id": { S: renter_id }
+            ":renter_id": { S: renter_id },
+            ":isBooked": { BOOL: true }
         },
         ReturnValues: "UPDATED_NEW"
     };
@@ -203,9 +204,9 @@ app.post('/addReservation', async (req, res) => {
         // Add the reservation to the bookingTable
         await ddbClient.send(new PutItemCommand(reservationParams));
 
-        // Update the current_renter field in the itemsTable
+        // Update the current_renter and isBooked fields in the itemsTable
         const updateResponse = await ddbClient.send(new UpdateItemCommand(updateItemParams));
-        console.log("Updated current_renter in itemsTable:", updateResponse);
+        console.log("Updated current_renter and isBooked in itemsTable:", updateResponse);
 
         res.status(200).json({
             message: 'Reservation added successfully and current_renter updated',
@@ -219,13 +220,38 @@ app.post('/addReservation', async (req, res) => {
 
 app.post('/cancelReservation', async (req, res) => {
     const { item_id } = req.body;
-    const params = {
+
+    if (!item_id) {
+        return res.status(400).json({ message: 'Missing required field: item_id' });
+    }
+
+    // Update the current_renter and isBooked fields in the itemsTable
+    const updateItemParams = {
         TableName: itemsTable,
         Key: {
             item_id: { S: item_id }
-        }
+        },
+        UpdateExpression: "SET current_renter = :nullValue, isBooked = :isBooked",
+        ExpressionAttributeValues: {
+            ":nullValue": { NULL: true },
+            ":isBooked": { BOOL: false }
+        },
+        ReturnValues: "UPDATED_NEW"
     };
-    //implement the logic to cancel the reservation
+
+    try {
+        // Update the current_renter and isBooked fields in the itemsTable
+        const updateResponse = await ddbClient.send(new UpdateItemCommand(updateItemParams));
+        console.log("Updated current_renter to null and isBooked to false in itemsTable:", updateResponse);
+
+        res.status(200).json({
+            message: 'Reservation canceled successfully',
+            updatedAttributes: updateResponse.Attributes
+        });
+    } catch (error) {
+        console.error('Error canceling reservation:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
 
 app.post('/removeListing', async (req, res) => {

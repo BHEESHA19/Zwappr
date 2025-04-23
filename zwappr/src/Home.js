@@ -24,11 +24,12 @@ import {
   PopoverAnchor,
 } from '@chakra-ui/react'
 
-const usery = getUser() || {};
-console.log(usery)
+
 
 
 function Home() {
+  const usery = getUser() || {};
+  console.log(usery)
     const [allListings, setAllListings] = useState([]);
     const [displayedListings, setDisplayedListings] = useState([]);
     const [error, setError] = useState(null);
@@ -194,6 +195,19 @@ function Home() {
         setError('Failed to upload item. Please try again.');
         setIsLoading(false);
     }
+
+    setItemDetails({
+        username: '',
+        email: '',
+        image_url: '',
+        location: '',
+        category: '',
+        item_name: '',
+        price_per_day: '',
+        description: '',
+        start_date: null,
+        end_date: null
+    });
 };
 
 const handleFilterChange = (e) => {
@@ -203,24 +217,144 @@ const handleFilterChange = (e) => {
 };
 
 const handleFilter = (filter) => {
-  
   let filteredListings = [...allListings];
-  if (filter === 'Reserved Items') {
 
-      filteredListings = allListings.filter(listing => listing.current_renter && listing.current_renter.includes(getUser().username));
-      console.log('reserved items', filteredListings)
+  if (filter === 'Reserved Items') {
+    // Filter listings where the current user's user_id matches the current_renter field
+    filteredListings = allListings.filter(
+      (listing) => listing.current_renter && listing.current_renter === usery.user_id
+    );
+    console.log('Reserved items:', filteredListings);
   } else if (filter !== 'None') {
-      filteredListings = allListings.filter(listing => listing.category === filter );
+    // Filter listings by category
+    filteredListings = allListings.filter((listing) => listing.category === filter);
   }
-  
+
+  // Apply search query filter if applicable
   if (searchQuery !== '') {
-      filteredListings = filteredListings.filter(listing =>
-          listing.item_name.toLowerCase().includes(searchQuery)
-      );
+    filteredListings = filteredListings.filter((listing) =>
+      listing.item_name.toLowerCase().includes(searchQuery)
+    );
   }
+
   setDisplayedListings(filteredListings);
 };
 
+const cancelReservation = async () => {
+  setIsLoading(true);
+  setError('');
+
+  try {
+    const reservationData = {
+      item_id: selectedListing?.item_id,
+      renter_id: usery.user_id,
+    };
+
+    const response = await fetch('http://localhost:5001/cancelReservation', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(reservationData),
+    });
+
+    if (response.ok) {
+      console.log('Reservation cancelled successfully.');
+      setMessage('Reservation cancelled successfully!');
+      toast({
+        title: 'Success',
+        description: 'Your reservation has been cancelled.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+      onEnlargedClose(); // Close the enlarged listing modal
+      setSelectedListing(null); // Reset selected listing
+      getAllListings(); // Refresh listings
+    } else {
+      const errorData = await response.json();
+      console.error('Error cancelling reservation:', errorData.message);
+      setError('Failed to cancel reservation. Please try again.');
+      toast({
+        title: 'Error',
+        description: 'Failed to cancel reservation. Please try again.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  } catch (error) {
+    console.error('Error cancelling reservation:', error);
+    setError('Failed to cancel reservation. Please try again.');
+    toast({
+      title: 'Error',
+      description: 'Failed to cancel reservation. Please try again.',
+      status: 'error',
+      duration: 3000,
+      isClosable: true,
+    });
+  } finally {
+    setIsLoading(false);
+  }
+}
+
+const deleteListing = async () => {
+  setIsLoading(true);
+  setError('');
+
+  try {
+    const listingData = {
+      item_id: selectedListing?.item_id,
+      user_id: usery.user_id,
+    };
+
+    const response = await fetch('http://localhost:5001/removeListing', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(listingData),
+    });
+
+    if (response.ok) {
+      console.log('Listing deleted successfully.');
+      setMessage('Listing deleted successfully!');
+      toast({
+        title: 'Success',
+        description: 'Your listing has been deleted.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+      onEnlargedClose(); // Close the enlarged listing modal
+      setSelectedListing(null); // Reset selected listing
+      getAllListings(); // Refresh listings
+    } else {
+      const errorData = await response.json();
+      console.error('Error deleting listing:', errorData.message);
+      setError('Failed to delete listing. Please try again.');
+      toast({
+        title: 'Error',
+        description: 'Failed to delete listing. Please try again.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  } catch (error) {
+    console.error('Error deleting listing:', error);
+    setError('Failed to delete listing. Please try again.');
+    toast({
+      title: 'Error',
+      description: 'Failed to delete listing. Please try again.',
+      status: 'error',
+      duration: 3000,
+      isClosable: true,
+    });
+  } finally {
+    setIsLoading(false);
+  }
+}
 
 const enlargeListing = (listing) => {
   setSelectedListing(listing);
@@ -228,12 +362,20 @@ const enlargeListing = (listing) => {
 };
 
 async function handleSubmitReservation() {
+  console.log('Submitting reservation:');
   setIsLoading(true);
   setError('');
 
   // Validate the reservation dates
   if (!reservationDetails.start_date || !reservationDetails.end_date) {
     setError('Please select both start and end dates.');
+    toast({
+      title: 'Error',
+      description: 'Please select both start and end dates.',
+      status: 'error',
+      duration: 3000,
+      isClosable: true,
+    });
     setIsLoading(false);
     return;
   }
@@ -416,7 +558,6 @@ async function handleSubmitReservation() {
         <Select iconSize='14px' id='filter' placeholder='' onChange={handleFilterChange} bg="white" color="black" border="none">
             <option value='None'>None</option>
             <option value='Reserved Items'>Reserved items</option>
-            <option value='Your Wishlist'>Your Wishlist</option>
             <option value='Party Supplies'>Party Supplies</option>
             <option value='Camera Equipment'>Camera Equipment</option>
             <option value='Furniture'>Furniture</option>
@@ -470,7 +611,7 @@ async function handleSubmitReservation() {
                                     Item Name:<Input id='item_name' focusBorderColor='black' placeholder='e.g. Camera' value={itemDetails.item_name} onChange={handleChange} />
                                 </Box>
                                 <Box id='i_price'>
-                                    Price Per Day:<Input id='price_per_day' focusBorderColor='black' placeholder='e.g. 1996' value={itemDetails.price_per_day} onChange={handleChange} />
+                                    Price Per Day ($):<Input id='price_per_day' focusBorderColor='black' placeholder='e.g. 50' value={itemDetails.price_per_day} onChange={handleChange} />
                                 </Box>
                                 <Box id='i_category'>
                                     Category: 
@@ -489,7 +630,7 @@ async function handleSubmitReservation() {
                                 </Box>
 
                                 <Box id='i_location'>
-                                    Category: 
+                                    Location: 
                                     <Select id='location' focusBorderColor='black' iconSize='20px' className='item_location' placeholder='None' value={itemDetails.location} onChange={handleChange}>
                                       <option value="">Select Dorm / Building</option>
                                       <option value="Cascade Hall">Cascade Hall</option>
@@ -589,6 +730,11 @@ async function handleSubmitReservation() {
                             <div id='right_side'>
                             <div id='reservation_details'>
                               <h2><b>${selectedListing?.price_per_day}</b>/day</h2>
+                              <p id='listing_location'><b>Location:</b> {selectedListing?.location}</p>
+                              <p id='listing_dates'>
+                                <b>Available From:</b> {new Date(selectedListing?.start_date).toLocaleDateString('en-GB')} 
+                                <b>To:</b> {new Date(selectedListing?.end_date).toLocaleDateString('en-GB')}
+                              </p>
                               <div>
                                 From:
                                 <DatePicker
@@ -616,8 +762,8 @@ async function handleSubmitReservation() {
                                 />
                               </div>
 
-                              {/* submit_reservation element */}
-                              {selectedListing?.isBooked === false && usery.username !== selectedListing?.username && (
+                              {/* submit_reservation element rendered only if current user is not the smae as owner of item */}
+                              {selectedListing?.isBooked === false && usery.user_id !== selectedListing?.user_id && (
                                 <div id='submit_reservation' className='reservation_options'>
                                   <Button
                                     id='submit_reservation'
@@ -632,24 +778,24 @@ async function handleSubmitReservation() {
                                 </div>
                               )}
 
-                              {/* item_reserved element */}
+                              {/* item_reserved element is displayed only if the isBooked field for the item is true */}
                               {selectedListing?.isBooked === true && (
                                 <div id='item_reserved' className='reservation_options'>
                                   Item Currently Reserved
                                 </div>
                               )}
 
-                              {/* cancel_reservation element */}
+                              {/* cancel_reservation element is displayed if the current user owns the selectedListing or if the current user is currently rennting the item*/}
                               {selectedListing?.isBooked === true && 
-                                (usery.username === selectedListing?.current_renter || usery.username === selectedListing?.username) && (
-                                <div id='cancel_reservation' className='reservation_options'>
+                                (usery.user_id === selectedListing?.current_renter || usery.user_id === selectedListing?.user_id) && (
+                                <div id='cancel_reservation' className='reservation_options' onClick={cancelReservation}>
                                   Cancel Current Reservation
                                 </div>
                               )}
 
-                              {/* delete_listing element */}
-                              {usery.username === selectedListing?.username && (
-                                <div id='delete_listing' className='reservation_options'>
+                              {/* delete_listing element is displayed only if the current user owns the item */}
+                              {usery.user_id === selectedListing?.user_id && (
+                                <div id='delete_listing' className='reservation_options' onClick={deleteListing}>
                                   Delete Listing
                                 </div>
                               )}
