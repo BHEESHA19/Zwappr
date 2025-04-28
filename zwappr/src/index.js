@@ -5,16 +5,17 @@ import App from './App';
 import Entry from './Entry';
 import reportWebVitals from './reportWebVitals';
 import Home from './Home';
+import Communities from './Communities'; 
 import { ChakraProvider } from '@chakra-ui/react';
 import ProtectedRoute from './ProtectedRoute';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <ChakraProvider>
-    <BrowserRouter>
-      
+      <BrowserRouter>
         <Routes>
           <Route path="/" element={<Entry />} />
           <Route
@@ -25,9 +26,16 @@ root.render(
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/communities"
+            element={
+              <ProtectedRoute>
+                <Communities />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
-      
-    </BrowserRouter>
+      </BrowserRouter>
     </ChakraProvider>
   </React.StrictMode>
 );

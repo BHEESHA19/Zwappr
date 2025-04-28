@@ -12,6 +12,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { getUser } from './AuthServices';
 import { faThumbsDown, faThumbsUp, faCircleInfo, faPaperPlane, faCircleUser, faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 
+
+
 import {
   Popover,
   PopoverTrigger,
@@ -69,6 +71,10 @@ function Home() {
   
 
   const navigate = useNavigate();
+  const goToCommunities = () => {
+    navigate('/communities');
+  };
+  
   const handleLogout = () => {
     removeUserSession(); // Remove user session
     navigate('/'); // Redirect to the home page or login page
@@ -507,10 +513,99 @@ async function handleSubmitReservation() {
 }
 
   return (
+
+
     <div className="App">
       <div className='topbar'>
-        <div className='titleandlogo'><img width="52" height="52" src="https://img.icons8.com/metro/52/swap.png" alt="swap"/><p id='title'>Zwappr</p></div>
-        <div className='searchbar'><Input id='searchbar' focusBorderColor='black' placeholder='Search Listings...' value={searchQuery} onChange={handleSearch}/></div>
+        
+        {/* <div className="top-container">
+  <div className="tagline">For the small things.</div>
+  <div className="modern-search-bar">
+    <input
+      type="text"
+      placeholder="Search listings..."
+      value={searchQuery}
+      onChange={handleSearch}
+    />
+    <img src="https://img.icons8.com/ios-filled/20/000000/search--v1.png" alt="Search" className="search-icon" />
+  </div>
+</div>
+
+<div className="category-bar">
+  {[
+    { name: 'Furniture', icon: 'furniture.png' },
+    { name: 'Games', icon: 'games.png' },
+    { name: 'Clothing', icon: 'clothing.png' },
+    { name: 'Home Decor', icon: 'homedecor.png' },
+    { name: 'Party Supplies', icon: 'party.png' }, 
+    { name: 'Cameras & Photography', icon: 'camersandphotography.png' },
+    { name: 'Camping & Outdoors', icon: 'campingandoutdoors.png' },
+    { name: 'Catering Equipment', icon: 'cateringequipment.png' },
+  ].map(category => (
+    <div className="category" key={category.name}>
+      <img src={require(`./assets/${category.icon}`)} alt={category.name} />
+      <span>{category.name}</span>
+    </div>
+  ))}
+</div> */}
+
+<div className="top-container">
+  <div className="header-row">
+    <div className="logo-section">
+      <img src="https://img.icons8.com/metro/52/swap.png" alt="swap" />
+      <span className="logo-text">Zwappr</span>
+    </div>
+
+    <div className="search-section">
+      <p className="tagline">For the small things.</p>
+      {/* <div className="modern-search-bar">
+        <input
+          type="text"
+          placeholder="Search listings..."
+          value={searchQuery}
+          onChange={handleSearch}
+        />
+        <img className="search-icon" src="https://img.icons8.com/ios-glyphs/30/search--v1.png" alt="search" />
+      </div> */}
+
+<div className="modern-search-bar">
+  <input
+    type="text"
+    placeholder="Search listings..."
+    value={searchQuery}
+    onChange={handleSearch}
+    className="search-input"
+  />
+  <button className="search-button">
+    <img
+      src="https://img.icons8.com/ios-glyphs/20/ffffff/search--v1.png"
+      alt="Search"
+    />
+  </button>
+</div>
+
+    </div>
+
+    <div className="icon-buttons">
+      <button className="circle-button"><FontAwesomeIcon icon={faCircleUser} /></button>
+      <button className="circle-button"><FontAwesomeIcon icon={faCircleInfo} /></button>
+    </div>
+  </div>
+
+  <div className="category-bar">
+    <div className="category"><img src={require('./assets/furniture.png')} alt="Furniture" /><span>Furniture</span></div>
+    <div className="category"><img src={require('./assets/games.png')} alt="Games" /><span>Games</span></div>
+    <div className="category"><img src={require('./assets/clothing.png')} alt="Clothing" /><span>Clothing</span></div>
+    <div className="category"><img src={require('./assets/homedecor.png')} alt="Home Decor" /><span>Home Decor</span></div>
+    <div className="category"><img src={require('./assets/party.png')} alt="Party Supplies" /><span>Party Supplies</span></div>
+    <div className="category"><img src={require('./assets/camersandphotography.png')} alt="Cameras" /><span>Cameras & Photography</span></div>
+    <div className="category"><img src={require('./assets/campingandoutdoors.png')} alt="Camping" /><span>Camping & Outdoors</span></div>
+    <div className="category"><img src={require('./assets/cateringequipment.png')} alt="Catering" /><span>Catering Equipment</span></div>
+  </div>
+</div>
+
+
+
         <div className='profileicon'>
         <Popover >
             <PopoverTrigger>
@@ -552,7 +647,7 @@ async function handleSubmitReservation() {
       </div>
 
 
-      <div className='buttons'>
+      {/* <div className='buttons'>
       <Button id='newlisting' color='black' fontSize='14px' colorScheme='white;' onClick={onAddOpen}>+ Add New Listing</Button>
         <div id='filter'>Filter
         <Select iconSize='14px' id='filter' placeholder='' onChange={handleFilterChange} bg="white" color="black" border="none">
@@ -572,7 +667,48 @@ async function handleSubmitReservation() {
         </Select>
 
         </div>
-      </div>
+      </div> */}
+
+<div className="top-buttons">
+  <Select 
+    placeholder="Filter"
+    onChange={handleFilterChange}
+    bg="white"
+    color="black"
+    border="1px solid black"
+    width="150px"
+    size="sm"
+    marginRight="10px"
+  >
+    <option value='Reserved Items'>Reserved items</option>
+    <option value='Party Supplies'>Party Supplies</option>
+    <option value='Camera Equipment'>Camera Equipment</option>
+    <option value='Furniture'>Furniture</option>
+    <option value='Games'>Games</option>
+    <option value='Clothing'>Clothing</option>
+    <option value='Home Decor'>Home Decor</option>
+    <option value='Camping & Outdoors'>Camping & Outdoors</option>
+    <option value='Catering Equipment'>Catering Equipment</option>
+    <option value='Books'>Books</option>
+    <option value='Other'>Other</option>
+  </Select>
+
+  <Button
+    colorScheme='blackAlpha'
+    size='sm'
+    variant='solid'
+    onClick={onAddOpen}
+  >
+    + Add New Listing
+  </Button>
+</div>
+
+
+
+<button onClick={goToCommunities} className="community-btn">
+  Go to Communities
+</button>
+
 
 
       <div className ='listings_box'>
@@ -584,10 +720,17 @@ async function handleSubmitReservation() {
                 <img src={listing.image_url} alt={listing.title} className='listing_image' id='listing_img'/>
               </div>
               <div id='listing_info'>
-              <div id='i_name_and_price'><h3>{listing.item_name}</h3> <h3>{listing.price_per_day}</h3> </div>
-              <p id='listing_location'>{listing.location}</p>
-              <Avatar colorPalette='black' size='2xs'name={listing.username} src='https://bit.ly/broken-link' />&nbsp;<b>{listing.username}</b>
-
+              <div className="info-top">
+              <span className="listing-title">{listing.item_name}</span>
+              <span className="listing-price">${listing.price_per_day}</span>
+</div>
+<div className="info-bottom">
+  <span className="listing-location">{listing.location}</span>
+  <div className="listing-user">
+    <Avatar size="2xs" name={listing.username} src="https://bit.ly/broken-link" />
+    <b>{listing.username}</b>
+  </div>
+</div>
 
               </div>
               

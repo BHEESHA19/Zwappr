@@ -285,12 +285,71 @@ app.post('/removeListing', async (req, res) => {
 //////////////////////////////////////////////////////////////////
 //SERVER ENDPOINTS
 //////////////////////////////////////////////////////////////////
+// app.post('/login', async (req, res) => {
+//     const username = req.body.username;
+//     const password = req.body.password;
+
+//     if (!username || !password) {
+//         console.log("Sending invalid login response1");
+//         return res.status(401).json({ message: 'Username and Password are required' });
+//     }
+
+//     const params = {
+//         TableName: usersTable,
+//         Key: {
+//             username: { S: username }
+//         }
+//     };
+
+//     try {
+//         const data = await ddbClient.send(new GetItemCommand(params));
+
+//         if (!data.Item) {
+//             // console.log("Sending invalid login response2");
+//             res.status(500).json({ message: 'Invalid username or password' });
+//         }
+
+//         const hashedPassword = data.Item.password.S;
+//         // console.log("Hashed password from DB: ", hashedPassword);
+//         // console.log("User data from DB: ", data.Item);
+//         // console.log("Password from request: ", password);
+//         // console.log("Is valid password: ", isValidPassword);
+//         const isValidPassword = compareSync(password.trim(), hashedPassword);
+
+//         if (!isValidPassword) {
+//             console.log("Sending invalid login response3");
+//             res.status(500).json({ message: 'Invalid username or password' });
+//         }
+
+//         else {
+
+//             const userInfo = {
+//                 username: data.Item.username.S,
+//                 email: data.Item.email.S,
+//                 user_id: data.Item.user_id.S
+//             };
+
+//             const token = _generateToken(userInfo);
+//             const response = {
+//                 user: userInfo,
+//                 token: token
+//             };
+//             console.log("Sending successful login response");
+//             res.status(200).json(response);
+//         }
+
+//     } catch (error) {
+//         console.error('Error retrieving user:', error);
+//         res.status(500).json({ message: 'Internal server error' });
+//     }
+// });
+
 app.post('/login', async (req, res) => {
-    const username = req.body.username;
+    const username = req.body.username?.trim().toLowerCase();  // Clean up input
     const password = req.body.password;
 
     if (!username || !password) {
-        console.log("Sending invalid login response1");
+        console.log("Missing username or password");
         return res.status(401).json({ message: 'Username and Password are required' });
     }
 
@@ -301,48 +360,45 @@ app.post('/login', async (req, res) => {
         }
     };
 
+    console.log("LOGIN PARAMS >>>", params); // Debug log
+
     try {
         const data = await ddbClient.send(new GetItemCommand(params));
 
         if (!data.Item) {
-            // console.log("Sending invalid login response2");
-            res.status(500).json({ message: 'Invalid username or password' });
+            console.log("User not found in DB");
+            return res.status(500).json({ message: 'Invalid username or password' });
         }
 
         const hashedPassword = data.Item.password.S;
-        // console.log("Hashed password from DB: ", hashedPassword);
-        // console.log("User data from DB: ", data.Item);
-        // console.log("Password from request: ", password);
-        // console.log("Is valid password: ", isValidPassword);
         const isValidPassword = compareSync(password.trim(), hashedPassword);
 
         if (!isValidPassword) {
-            console.log("Sending invalid login response3");
-            res.status(500).json({ message: 'Invalid username or password' });
+            console.log("Password mismatch");
+            return res.status(500).json({ message: 'Invalid username or password' });
         }
 
-        else {
+        const userInfo = {
+            username: data.Item.username.S,
+            email: data.Item.email.S,
+            user_id: data.Item.user_id.S
+        };
 
-            const userInfo = {
-                username: data.Item.username.S,
-                email: data.Item.email.S,
-                user_id: data.Item.user_id.S
-            };
+        const token = _generateToken(userInfo);
+        const response = {
+            user: userInfo,
+            token: token
+        };
 
-            const token = _generateToken(userInfo);
-            const response = {
-                user: userInfo,
-                token: token
-            };
-            console.log("Sending successful login response");
-            res.status(200).json(response);
-        }
+        console.log("Successful login:", userInfo.username);
+        res.status(200).json(response);
 
     } catch (error) {
         console.error('Error retrieving user:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
 
 app.post('/register', async (req, res) => {
     console.log(req.body);
@@ -391,6 +447,47 @@ app.post('/register', async (req, res) => {
     }
 
 });
+
+app.post('/createCommunityPost', async (req, res) => {
+    const { user_id, username, message, contact_info } = req.body;
+
+    if (!user_id || !username || !message || !contact_info) {
+        return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const params = {
+        TableName: 'Zwappr_Communities',
+        Item: {
+            post_id: { S: uuidv4() },
+            user_id: { S: user_id },
+            username: { S: username },
+            message: { S: message },
+            contact_info: { S: contact_info },
+            timestamp: { S: new Date().toISOString() }
+        }
+    };
+
+    try {
+        await ddbClient.send(new PutItemCommand(params));
+        res.status(200).json({ message: 'Post created successfully' });
+    } catch (err) {
+        console.error('Error:', err);
+        res.status(500).json({ message: 'Failed to create post' });
+    }
+});
+
+app.get('/getCommunityPosts', async (req, res) => {
+    const params = { TableName: 'Zwappr_Communities' };
+    try {
+        const data = await ddbDocClient.send(new ScanCommand(params));
+        res.status(200).json(data.Items);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to fetch posts' });
+    }
+});
+
+
 
 
 
@@ -466,3 +563,10 @@ function _generateToken(userInfo) {
     );
     return token;
 }
+app.get('/aws-check', async (req, res) => {
+    const { ListTablesCommand } = require("@aws-sdk/client-dynamodb");
+    const listCommand = new ListTablesCommand({});
+    const data = await ddbClient.send(listCommand);
+    res.json({ tables: data.TableNames });
+  });
+  

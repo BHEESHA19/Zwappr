@@ -1,175 +1,341 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
 
-
-
-.App{
-    font: Poppins, sans-serif;
-    height: fit-content;
-    width: 100vw;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+/* ========== Reset and Base Styles ========== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-.topbar{
-    width: 100vw;
-    height: 10vh;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
+  color: #333;
 }
 
-.titleandlogo{
-    display: flex;
-    flex-direction: row;
-    align-items: end;
-    width: 15%;
+/* ========== Header ========== */
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px 50px;
+  background-color: white;
+  flex-wrap: wrap;
 }
 
-#title{
-    font-size: 2.0rem;
-    font-weight: 600;
-    color: black;
-    margin-left: 0.5rem;
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.searchbar{
-    width: 70%;
-    height: 3rem;
-    border-radius: 40px;
-    border: none;
-    padding-left: 1rem;
-    font-size: 1.2rem;
-    margin-top: 20px;
+.logo-text {
+  font-size: 1.8rem;
+  font-weight: 600;
 }
 
-.profileicon{
-    width: 15%;
-    height: 3rem;
-    border-radius: 50%;
-    margin-right: 1rem;
+.search-section {
+  flex-grow: 1;
+  text-align: center;
 }
 
-.buttons{
-    width: 100vw;
-    height: 40px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
+.tagline {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 8px;
 }
 
-#newlisting{
-    width: 10%;
-    height: 30px;
-    border: 1px solid black;
-    border-radius: 5px;
-    transition: 0.3s ease-in;
+/* .modern-search-bar {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
-#newlisting:hover{
-    background-color: black;
-    color: white;
+.modern-search-bar input {
+  width: 100%;
+  padding: 12px 40px 12px 20px;
+  border-radius: 30px;
+  border: 1px solid #ccc;
+  background: #fff;
+  font-size: 1rem;
+} */
+
+.search-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
 }
 
-#filter{
-    width: 10%;
-    height: 30px;
-    border: 1px solid black;
-    border-radius: 5px;
-    transition: 0.3s ease-in;
-    display: flex;
-    flex-direction: row;
+/* ========== Icons ========== */
+.icon-buttons {
+  display: flex;
+  gap: 12px;
 }
 
-#filter:hover{
-    background-color: black;
-    color: white;
+.circle-button {
+  background-color: #eee;
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* ========== Category Bar ========== */
+.category-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 40px;
+  padding: 20px 40px 10px;
+  background-color: white;
+}
+
+.category {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #333;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.category:hover {
+  transform: scale(1.05);
+}
+
+.category img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  margin-bottom: 5px;
+}
+
+/* ========== Add Listing + Filter Buttons ========== */
+.buttons {
+  display: flex;
+  align-items: center;
+  padding: 10px 40px;
+  background-color: white;
+  overflow-x: auto;
+  gap: 30px;
+  border-bottom: 1px solid #eee;
+}
+
+#filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.item_filter select {
+  border: none;
+  padding: 8px;
+  border-radius: 10px;
+}
+
+/* ========== Listings Grid ========== */
+.listings_box {
+  padding: 30px 40px;
+}
+
+.sub_listings_box {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 30px;
+}
+
+.listing {
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.listing:hover {
+  transform: scale(1.02);
+}
+
+#listing_img img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+#listing_info {
+  padding: 15px;
+}
+
+#i_name_and_price {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+#listing_location {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+/* ========== Modals ========== */
+#listing_entry,
+.enlargedCard {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ========== Utility Buttons ========== */
+.logout_butt {
+  background-color: transparent;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.reservation_options {
+  margin-top: 15px;
+  font-weight: bold;
+  color: #444;
+  cursor: pointer;
+}
+
+.reservation_options:hover {
+  text-decoration: underline;
+}
+
+#submit_reservation button {
+  background-color: #000;
+  color: white;
+  border-radius: 10px;
+}
+
+/* ========== Wrapper Container ========== */
+.top-container {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.top-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 10px 20px;
+  gap: 10px;
+  margin-top: -10px;
 }
 
 
-.listings_box{
-    width: 80vw;
-    height: 800px;
-    margin-bottom: 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 20px;
+.topbar {
+  background-color: white;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* Optional: subtle bottom shadow */
 }
 
-.sub_listings_box{
-    display: flex;
-    flex-direction: row;
-    overflow:scroll;
-    margin-top: 20px;
-    flex-wrap: wrap;
-    width: 100%;
-    justify-content: space-evenly;
-}
-
-.listing{
-    display: flex;
-    flex-direction: column;
-    width: 20%;
-    height: 250px;
-    border: 1px solid black;
-    border-radius: 5px;
-}
-
-#listing_img{
-    width: 100%;
-   
-    border-radius: 5px;
-}
-
-#left_side{
-    display: flex;
-    flex-direction: column;
-    width: 70%;
-    height: 100%;
-}
-
-#right_side{
-    display: flex;
-    flex-direction: column;
-    width: 30%;
-    height: 100%;
-}
-
-#reservation_details{
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 60%;
-    border: 1px solid black;
-    border-radius: 5px;
-}
-
-.reservation_options{
-    width: 120px;
-    height: 50px;
-    border: 1px solid black;
-    border-radius: 5px;
-    transition: 0.3s ease-in;
-    
-}
-
-.reservation_options:hover{
-    background-color: black;
-    color: white;
-    cursor: pointer;
-}
-
-#item_reserved{
-    background-color: gray;
-}
-
-#item_reserved:hover{
-    background-color: gray;
-    color: black;
-    cursor: default;
+.profileicon {
+  background-color: white;
+  display: flex;
+  justify-content: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 
+.modern-search-bar {
+  display: flex;
+  align-items: center;
+  background-color: white;
+  border-radius: 999px;
+  padding: 6px 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  width: 500px; /* You can increase this to make it longer */
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  padding: 8px;
+  background-color: transparent;
+}
+
+.search-button {
+  width: 36px;
+  height: 36px;
+  background-color: black;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.search-button img {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0) invert(1); /* makes the icon white */
+}
+
+.info-top {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.info-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.listing-location {
+  font-size: 14px;
+  color: grey;
+}
+
+.listing-user {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.community-btn {
+  background-color: black;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+
+
+
+/* ========== Media Queries ========== */
+/* Add media queries as needed for responsive design */

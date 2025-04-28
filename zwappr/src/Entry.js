@@ -1,152 +1,182 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@chakra-ui/react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
-import './index.css';
-import { isLoggedIn, setUserSession } from './AuthServices';
-import { Link } from 'react-router-dom';
-
-const LoginForm = () => {
-    const [message, setMessage] = useState('');
-  
-    const handleLogin = async () => {
-        console.log('Login button clicked');
-      const username = document.querySelector('#login-username').value;
-      const password = document.querySelector('#login-password').value;
-  
-      try {
-        const response = await fetch(`http://localhost:5001/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, password }),
-          });
-  
-        const data = await response.json();
-        if (response.ok) {
-          setUserSession(data.user, data.token); // Save user session
-          setMessage('Login successful!');
-          // Optionally, redirect or update state as needed
-        } else {
-          setMessage(data.message || 'Login failed. Please check your credentials.');
-        }
-      } catch (error) {
-        setMessage('An error occurred. Please try again.');
-      }
-    };
-  
-    return (
-      <div className='form_container'>
-        <h2 className='fom_title'>Log In</h2>
-        <input className='form_inpt' type="text" id="login-username" placeholder="Username" />
-        <input className='form_inpt' type="password" id="login-password" placeholder="Password" />
-        <Button _hover={{ bg: '#3eaff6' }} backgroundColor='black' color='white'className='fom_act' onClick={handleLogin}>Log In</Button>
-        {message && <p>{message}</p>}
-      </div>
-    );
-  };
-  
-  const RegisterForm = () => {
-      const [message, setMessage] = useState('');
-    
-      const handleRegister = async () => {
-        const username = document.querySelector('#register-username').value;
-        const email = document.querySelector('#register-email').value;
-        const password = document.querySelector('#register-password').value;
-    
-        try {
-          const response = await fetch('http://localhost:5001/register', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, email, password }),
-          });
-    
-          const data = await response.json();
-          if (response.ok) {
-            setMessage('Registration successful!');
-            // Optionally, redirect or update state as needed
-          } else {
-            setMessage(data.message || 'Registration failed. Please try again.');
-          }
-        } catch (error) {
-          setMessage('An error occurred. Please try again.');
-        }
-      };
-    
-      return (
-        <div className='form_container'>
-          <h2 className='fom_title'>Register</h2>
-          <input className='form_inpt' type="text" id="register-username" placeholder="Username" />
-          <input className='form_inpt' type="text" id="register-email" placeholder="Email" />
-          <input className='form_inpt' type="password" id="register-password" placeholder="Password" />
-          <Button _hover={{ bg: '#3eaff6' }} backgroundColor='black' color='white' className='fom_act' onClick={handleRegister}>Register</Button>
-          {message && <p>{message}</p>}
-        </div>
-      );
-  };
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { setUserSession } from './AuthServices';
+import './Entry.css';
 
 const Entry = () => {
-  
+  const [currentForm, setCurrentForm] = useState('login');
+  const navigate = useNavigate();
 
+  return (
+    <div className="fullpage">
+      <div className="form-container">
+        {currentForm === 'login' ? (
+          <LoginForm switchForm={() => setCurrentForm('register')} navigate={navigate} />
+        ) : (
+          <RegisterForm switchForm={() => setCurrentForm('login')} navigate={navigate} />
+        )}
+      </div>
+    </div>
+  );
+};
 
+const LoginForm = ({ switchForm, navigate }) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
 
-    const [currentForm, setCurrentForm] = useState('login');
-    // const navigate = useNavigate();
+  const handleLogin = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
 
-
-    const renderForm = () => {
-        console.log('Current Form:', currentForm);
-      switch (currentForm) {
-        case 'register':
-          return <RegisterForm />;
-        default:
-          return <LoginForm />;
+      const data = await response.json();
+      if (response.ok) {
+        setUserSession(data.user, data.token);
+        navigate('/home');
+      } else {
+        setMessage(data.message || 'Login failed.');
       }
-    };
+    } catch (error) {
+      setMessage('An error occurred. Try again.');
+    }
+  };
 
+  return (
+    <>
+      <div className="form-title">Login to Zwappr</div>
+      <input
+        className="form-input"
+        type="text"
+        placeholder="Username or Email"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
+      <input
+        className="form-input"
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <button className="form-btn" onClick={handleLogin}>Login</button>
+      {message && <p>{message}</p>}
+      <div className="toggle-link">
+        Don't have an account? <span onClick={switchForm}>Sign up</span>
+      </div>
+    </>
+  );
+};
 
-    return (
-        <div className='fullpage'>
-         <div className='top_help'><nav className='navig'>
-                    
-                    
-                    <b>Zwappr</b>
-                    
-                </nav>
-          </div>
-         
-          
-          {!isLoggedIn() && (
-            <>
-              <div className="form-toggle">
-                <button className='form_butns' onClick={() => setCurrentForm('register')}>Register</button>&nbsp;
-                <button className='form_butns' onClick={() => setCurrentForm('login')}>Login</button>
-              </div>
-              <div className="form-container">
-                {renderForm()}
-              </div>
-            </>
-          )}
-          <div>
-        
-            
-            <Link to="/Home" ><Button id='get_start'>Get Started &nbsp; <FontAwesomeIcon size='sm' icon={faRightFromBracket} style={{color: "white",}} /></Button></Link>
-           
+const RegisterForm = ({ switchForm, navigate }) => {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [address, setAddress] = useState('');
+  const [message, setMessage] = useState('');
 
-            
-          </div>
-        </div>
-      );
+  const handleRegister = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          username, 
+          email, 
+          password,
+          firstName, 
+          lastName, 
+          address 
+        }),
+      });
 
+      const data = await response.json();
+      if (response.ok) {
+        setUserSession(data.user, data.token);
+        navigate('/profile', { state: { user: data.user } });
+      } else {
+        setMessage(data.message || 'Registration failed.');
+      }
+    } catch (error) {
+      setMessage('An error occurred. Try again.');
+    }
+  };
 
+  return (
+    <>
+      <div className="form-title">Sign up for Zwappr</div>
 
-}
+      <input
+        className="form-input"
+        type="text"
+        placeholder="First Name"
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+      />
 
+      <input
+        className="form-input"
+        type="text"
+        placeholder="Last Name"
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+      />
 
+      <input
+        className="form-input"
+        type="text"
+        placeholder="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
 
-  
+      <input
+        className="form-input"
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+
+      <input
+        className="form-input"
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      <select
+        className="form-input"
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
+      >
+        <option value="">Select Dorm / Building</option>
+        <option value="Cascade Hall">Cascade Hall</option>
+        <option value="Aurora Hall">Aurora Hall</option>
+        <option value="Olympus Hall">Olympus Hall</option>
+        <option value="Yamnuska Hall">Yamnuska Hall</option>
+        <option value="Global Village">Global Village</option>
+        <option value="Kananaskis Hall">Kananaskis Hall</option>
+        <option value="Rundle Hall">Rundle Hall</option>
+        <option value="Crowsnest Hall">Crowsnest Hall</option>
+        <option value="International House">International House</option>
+        <option value="Varsity Courts">Varsity Courts</option>
+      </select>
+
+      <button className="form-btn" onClick={handleRegister}>Register</button>
+      {message && <p>{message}</p>}
+
+      <div className="toggle-link">
+        Already have an account? <span onClick={switchForm}>Login</span>
+      </div>
+    </>
+  );
+};
 
 export default Entry;
